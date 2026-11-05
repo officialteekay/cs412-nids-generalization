@@ -1,0 +1,75 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[pagenumbers]{cvpr}
+\usepackage{multirow}
+\definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\usepackage[breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+\makeatletter\let\inputrows\@@input\makeatother
+\def\confName{CS 412}
+\def\confYear{2026}
+\input{numbers.tex}
+
+\title{Do Network Intrusion Detectors Generalize?\\A Cross-Dataset Comparison of Machine Learning Models\\[4pt]\large Final Project Report}
+
+\author{Daniel Kolawole\\
+University of Illinois Chicago\\
+CS 412 Introduction to Machine Learning, Fall 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\ABSTRACT
+\end{abstract}
+
+\section{Introduction}
+
+A network intrusion detection system, or NIDS, watches traffic on a network and flags connections that look like attacks. Machine learning fits this task well because a model can learn what attack traffic looks like from labeled examples instead of relying on hand written rules. Papers on machine learning intrusion detection often report scores above 99 percent. Even so, these detectors are still rarely trusted in real networks.
+
+This project looks at one reason for that gap, which is how detectors are evaluated. Most papers take one public dataset, split it at random into a training set and a test set, and report how well the model does on the test set. The test flows then come from the same lab, the same machines, the same attack tools, and the same time period as the training flows. A model can score very well in that setup by learning the quirks of one lab instead of what attacks actually look like. The question this project asks is how well an intrusion detector trained on one network works on a network it has never seen, and whether the type of model changes how much performance drops.
+
+This concern is not new. Sommer and Paxson argued that the diversity of network traffic makes intrusion detection a hard fit for machine learning \cite{sommer2010}, and Arp \etal found sampling bias in 90 percent of the 30 top security papers they reviewed \cite{arp2022}. What makes a direct test possible now is the NetFlow v2 collection from Sarhan, Layeghy, and Portmann, which converts several well known datasets built in different labs into one shared set of 43 features \cite{sarhan2022}. With a shared format, a model trained on one dataset can be tested on another without any feature mapping. Section~\ref{sec:previous} covers this work in more detail.
+
+The methods are simple on purpose. Three NetFlow v2 datasets from three different environments were sampled and cleaned. Four model families from the course were compared, logistic regression, a random forest, a multilayer perceptron, and a self-attention model based on the FT-Transformer. Every model was trained on each dataset and tested on all three, using the same splits, preprocessing, threshold, and metrics. Two follow-up experiments test whether training on two networks helps and whether removing a feature that looks like a lab artifact helps. A permutation importance analysis shows which features each model relies on.
+
+\INTRORESULTS
+
+The main contributions are a controlled cross-dataset comparison of four model families on three NetFlow datasets, evidence that the most accurate in-dataset model is the least transferable one, a negative result for simple multi-source training, and a concrete example of a lab artifact in UNSW-NB15 that a single rule can exploit. This is a solo project, so all of the work in this report was done by Daniel Kolawole.
+
+\input{method.tex}
+\input{results.tex}
+
+\section{Conclusions and Future Work}
+
+\subsection{Summary}
+
+This project tested whether machine learning intrusion detectors trained on one network still work on another. They do not. Four model families that all score between \INFMIN{} and \INFMAX{} F1 on their own network drop to between \CROSSMIN{} and \CROSSMAXAVG{} average F1 on networks they were not trained on. The random forest, which is the best model in-dataset, transfers the worst, and its cross-dataset AUC is below 0.5 on average. Training on two networks did not help with the third, because flexible models learned a separate rule for each network. The feature analysis showed that the models depend on different features on each network, and that the TTL features in UNSW-NB15 are a lab artifact that a one-line rule can use to reach an F1 of 0.832. \CONCLABLATION
+
+\subsection{Lessons learned}
+
+The biggest lesson is that an in-dataset score on a lab dataset says very little about how a detector will do anywhere else. Before this project, a random forest with 0.977 F1 would have looked like a finished detector. Moved to a new network, the same model catches almost nothing. Any claim about an intrusion detector should come with at least one test on data from a different source.
+
+The second lesson is to check what a model is actually using. The TTL shortcut was not visible in any score. It only showed up after looking at feature importance and then at the raw values. Without that step it would have been easy to report the UNSW-NB15 results as evidence that the models learned attack behavior.
+
+The third lesson is about metrics. Accuracy rewarded models that detected nothing, and AUC below 0.5 showed that some failures cannot be fixed by moving the threshold. Reporting recall, false positive rate, and F1 on the attack class made the failures obvious right away.
+
+There were also practical lessons. The first MLP runs stopped at a fixed 10 epoch cap while the validation loss was still going down, and they had to be rerun with early stopping. The attention model was too slow to train on the full data on a CPU, so it had to be compared against an MLP trained on the same subsample to keep the comparison fair. Planning for compute limits early would have saved time.
+
+\subsection{Limitations}
+
+The results come from samples of about 300,000 flows per dataset, not the full datasets. Only three datasets were used, and they all share the same NetFlow format, so a different feature format could behave differently. The attention model was trained on 60,000 flows per source, and its multi-source runs used one seed. Every model used a fixed threshold of 0.5. The benign-only autoencoder from the proposal's stretch goal was not built.
+
+\subsection{Future work}
+
+The most practical next step is to see how much labeled data from a new network is needed to recover. Fine-tuning each model on a small number of labeled flows from the target network, for example 100 or 1,000, would show whether a detector can be adapted quickly or has to be retrained from scratch. A second direction is domain adaptation methods that use unlabeled traffic from the new network, since benign traffic is easy to collect even when attacks are not. A third is to remove more network-specific features in a systematic way, by dropping features whose benign distribution changes the most between networks and checking whether cross-dataset results improve. Finally, the benign-only autoencoder from the proposal is still worth testing, since a model that only learns what normal traffic looks like does not depend on which attacks a lab happened to run.
+
+\section*{Code}
+The code for data sampling, training, evaluation, and every table and figure in this report is available on GitHub.
+\begin{center}\footnotesize\mbox{\GITHUB}\end{center}
+
+{
+\small
+\bibliographystyle{ieeenat_fullname}
+\bibliography{refs}
+}
+
+\end{document}

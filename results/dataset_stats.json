@@ -1,0 +1,64 @@
+{
+  "unsw": {
+    "total_flows": 2390275,
+    "attack_flows": 95053,
+    "attack_share": 0.039766554057587514,
+    "attack_types": {
+      "Benign": 2295222,
+      "Fuzzers": 22310,
+      "Exploits": 31551,
+      "Reconnaissance": 12779,
+      "Generic": 16560,
+      "DoS": 5794,
+      "Shellcode": 1427,
+      "Backdoor": 2169,
+      "Worms": 164,
+      "Analysis": 2299
+    },
+    "sample_flows": 299798,
+    "sample_attack_share": 0.03977344745461944
+  },
+  "ton": {
+    "total_flows": 16940496,
+    "attack_flows": 10841027,
+    "attack_share": 0.6399474371942828,
+    "attack_types": {
+      "scanning": 3781419,
+      "Benign": 6099469,
+      "injection": 684465,
+      "dos": 712609,
+      "xss": 2455020,
+      "password": 1153323,
+      "ddos": 2026234,
+      "ransomware": 3425,
+      "mitm": 7723,
+      "backdoor": 16809
+    },
+    "sample_flows": 300587,
+    "sample_attack_share": 0.6393290461663346
+  },
+  "cic": {
+    "total_flows": 18893708,
+    "attack_flows": 2258141,
+    "attack_share": 0.11951814858152777,
+    "attack_types": {
+      "Benign": 16635567,
+      "DDOS attack-HOIC": 1080858,
+      "DoS attacks-Hulk": 432648,
+      "DDoS attacks-LOIC-HTTP": 307300,
+      "Bot": 143097,
+      "Infilteration": 116361,
+      "SSH-Bruteforce": 94979,
+      "DoS attacks-GoldenEye": 27723,
+      "FTP-BruteForce": 25933,
+      "DoS attacks-SlowHTTPTest": 14116,
+      "DoS attacks-Slowloris": 9512,
+      "Brute Force -Web": 2143,
+      "DDOS attack-LOIC-UDP": 2112,
+      "Brute Force -XSS": 927,
+      "SQL Injection": 432
+    },
+    "sample_flows": 300519,
+    "sample_attack_share": 0.11974284487836044
+  }
+}

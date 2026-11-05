@@ -1,0 +1,91 @@
+\begin{thebibliography}{12}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Arp et~al.(2022)Arp, Quiring, Pendlebury, Warnecke, Pierazzi,
+  Wressnegger, Cavallaro, and Rieck]{arp2022}
+Daniel Arp, Erwin Quiring, Feargus Pendlebury, Alexander Warnecke, Fabio
+  Pierazzi, Christian Wressnegger, Lorenzo Cavallaro, and Konrad Rieck.
+\newblock Dos and don'ts of machine learning in computer security.
+\newblock In \emph{31st USENIX Security Symposium}, 2022.
+
+\bibitem[Bishop(2006)]{bishop2006}
+Christopher~M. Bishop.
+\newblock \emph{Pattern Recognition and Machine Learning}.
+\newblock Springer, 2006.
+
+\bibitem[Gorishniy et~al.(2021)Gorishniy, Rubachev, Khrulkov, and
+  Babenko]{gorishniy2021}
+Yury Gorishniy, Ivan Rubachev, Valentin Khrulkov, and Artem Babenko.
+\newblock Revisiting deep learning models for tabular data.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2021.
+
+\bibitem[Moustafa(2021)]{moustafa2021}
+Nour Moustafa.
+\newblock A new distributed architecture for evaluating {AI}-based security
+  systems at the edge: Network {TON\_IoT} datasets.
+\newblock \emph{Sustainable Cities and Society}, 72:\penalty0 102994, 2021.
+
+\bibitem[Moustafa and Slay(2015)]{moustafa2015}
+Nour Moustafa and Jill Slay.
+\newblock {UNSW-NB15}: A comprehensive data set for network intrusion detection
+  systems.
+\newblock In \emph{Military Communications and Information Systems Conference
+  (MilCIS)}, pages 1--6, 2015.
+
+\bibitem[Paszke et~al.(2019)]{paszke2019}
+Adam Paszke et~al.
+\newblock {PyTorch}: An imperative style, high-performance deep learning
+  library.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2019.
+
+\bibitem[Pedregosa et~al.(2011)]{pedregosa2011}
+Fabian Pedregosa et~al.
+\newblock Scikit-learn: Machine learning in {P}ython.
+\newblock \emph{Journal of Machine Learning Research}, 12:\penalty0 2825--2830,
+  2011.
+
+\bibitem[Sarhan et~al.(2022{\natexlab{a}})Sarhan, Layeghy, and
+  Portmann]{sarhan2022}
+Mohanad Sarhan, Siamak Layeghy, and Marius Portmann.
+\newblock Towards a standard feature set for network intrusion detection system
+  datasets.
+\newblock \emph{Mobile Networks and Applications}, 27:\penalty0 357--370,
+  2022{\natexlab{a}}.
+
+\bibitem[Sarhan et~al.(2022{\natexlab{b}})Sarhan, Layeghy, and
+  Portmann]{sarhan2022bdr}
+Mohanad Sarhan, Siamak Layeghy, and Marius Portmann.
+\newblock Evaluating standard feature sets towards increased generalisability
+  and explainability of {ML}-based network intrusion detection.
+\newblock \emph{Big Data Research}, 30:\penalty0 100359, 2022{\natexlab{b}}.
+
+\bibitem[Sharafaldin et~al.(2018)Sharafaldin, Lashkari, and
+  Ghorbani]{sharafaldin2018}
+Iman Sharafaldin, Arash~Habibi Lashkari, and Ali~A. Ghorbani.
+\newblock Toward generating a new intrusion detection dataset and intrusion
+  traffic characterization.
+\newblock In \emph{International Conference on Information Systems Security and
+  Privacy (ICISSP)}, pages 108--116, 2018.
+
+\bibitem[Sommer and Paxson(2010)]{sommer2010}
+Robin Sommer and Vern Paxson.
+\newblock Outside the closed world: On using machine learning for network
+  intrusion detection.
+\newblock In \emph{IEEE Symposium on Security and Privacy}, pages 305--316,
+  2010.
+
+\bibitem[Vaswani et~al.(2017)Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez,
+  Kaiser, and Polosukhin]{vaswani2017}
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+  Aidan~N. Gomez, Lukasz Kaiser, and Illia Polosukhin.
+\newblock Attention is all you need.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2017.
+
+\end{thebibliography}

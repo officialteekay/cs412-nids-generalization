@@ -1,0 +1,94 @@
+\section{Previous Work}
+\label{sec:previous}
+
+Sommer and Paxson were among the first to argue that intrusion detection is a poor fit for the way machine learning is usually applied \cite{sommer2010}. They pointed out that the task is mostly about finding outliers, that errors are very costly, that there is a big gap between what a model flags and what an operator can act on, that network traffic is extremely diverse, and that detectors are hard to evaluate well. The diversity point is the one this project tests most directly. If normal traffic looks different on every network, a model trained on one network has no reason to understand another.
+
+Arp \etal turned these concerns into a list of ten pitfalls and checked how often they show up in 30 papers from the top security conferences \cite{arp2022}. Sampling bias was at least partly present in 90 percent of the papers, and lab-only evaluation and inappropriate performance measures were each at least partly present in more than half. One of their case studies is close to this project. They showed that Kitsune, a deep learning intrusion detector, was beaten at low false positive rates by a simple statistical method that only counted packets, because the lab dataset made the attack very easy to spot. Their main lesson is that high scores on one lab dataset say little about how a detector will do somewhere else.
+
+The datasets used here were each built in a different lab. UNSW-NB15 was generated in the UNSW Canberra cyber range \cite{moustafa2015}, CSE-CIC-IDS2018 was built by the Canadian Institute for Cybersecurity on Amazon Web Services \cite{sharafaldin2018}, and ToN-IoT was collected from a testbed of Internet of Things and industrial devices \cite{moustafa2021}. For a long time these datasets could not be compared directly because each one used its own feature format. Sarhan, Layeghy, and Portmann converted them into a shared NetFlow format with 43 features and released them as the NetFlow v2 collection \cite{sarhan2022}. They tested the 43 features with an Extra Trees classifier inside each dataset and got high results, for example 98.90 percent multi-class accuracy on NF-UNSW-NB15-v2. In follow-up work they compared two common feature sets across three datasets, found that NetFlow features gave higher detection accuracy, and used SHAP to explain which features the models used \cite{sarhan2022bdr}.
+
+On the modeling side, Gorishniy \etal proposed the FT-Transformer for tabular data \cite{gorishniy2021}. It turns each feature into a token and runs a transformer encoder over the tokens, using the self-attention mechanism from Vaswani \etal \cite{vaswani2017}. The self-attention model in this project follows that design at a smaller size.
+
+This project differs from the work above in three ways. It trains every model on one network and tests it on every other network, instead of testing on a random split of the same network. It puts four model families from this course side by side under exactly the same samples, splits, preprocessing, and metrics. It also tests two simple ideas for closing the gap, which are training on more than one network and removing a feature that looks like a lab artifact.
+
+\section{Problem Description and Methodology}
+\label{sec:method}
+
+\subsection{Problem setup}
+
+Each flow is a vector $\mathbf{x} \in \mathbb{R}^{38}$ of NetFlow features with a label $y \in \{0, 1\}$, where $y = 1$ means the flow is part of an attack. There are three datasets, $\mathcal{D}_1$, $\mathcal{D}_2$, and $\mathcal{D}_3$, and each one comes from a different network. A model $f$ is trained on the training split of a source dataset $\mathcal{D}_s$ and tested on the test split of a target dataset $\mathcal{D}_t$. When $s = t$ this is the usual in-dataset test. When $s \neq t$ the model has never seen a single flow from the target network, which is what would happen if a detector trained in a lab was deployed somewhere new.
+
+Running every source and target pair gives a 3 by 3 grid of results for each model. The generalization gap of a model is
+\begin{equation}
+G(f) = \frac{1}{3}\sum_{s} F_1(s, s) - \frac{1}{6}\sum_{s \neq t} F_1(s, t),
+\end{equation}
+where $F_1(s, t)$ is the attack-class F1 score of the model trained on $\mathcal{D}_s$ and tested on $\mathcal{D}_t$. A gap near zero means the model works about as well on new networks as on its own. A large gap means the in-dataset score is mostly measuring how well the model learned one lab.
+
+\subsection{Data}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lrrrr}
+\toprule
+Dataset & Flows & Attack \% & Classes & Sample \\
+\midrule
+UNSW-NB15 & 2,390,275 & 3.98 & 9 & 299,798 \\
+ToN-IoT & 16,940,496 & 63.99 & 9 & 300,587 \\
+CIC-IDS2018 & 18,893,708 & 11.95 & 14 & 300,519 \\
+\bottomrule
+\end{tabular}
+\caption{The three NetFlow v2 datasets. Flows and attack share are for the full datasets. Classes counts the attack types, not including benign. Sample is the number of flows kept for this project.}
+\label{tab:data}
+\end{table}
+
+Table~\ref{tab:data} lists the three datasets, all from the NetFlow v2 collection \cite{sarhan2022}. NF-BoT-IoT-v2 is also in the collection but was left out, because 99.64 percent of its flows are attacks and a benign versus attack comparison would mean very little. The three datasets that were kept differ in almost every way. Attacks make up about 4 percent of UNSW-NB15, 12 percent of CIC-IDS2018, and 64 percent of ToN-IoT. The largest attack class is exploits in UNSW-NB15, scanning in ToN-IoT, and the HOIC DDoS attack in CIC-IDS2018.
+
+The full datasets are too large to train dozens of models on with limited compute, so each one was read in chunks and a random sample of about 300,000 flows was kept with a fixed seed. Sampling at random keeps the original class balance. This matters because precision and false positive rate both depend on how rare attacks are, and a balanced sample would make every detector look better than it would be in practice \cite{arp2022}.
+
+Five of the 43 columns were removed. The source and destination IP addresses and ports identify specific machines in each lab, so a model could memorize them instead of learning attack behavior. DNS\_QUERY\_ID is a random transaction number and should not carry real signal. The v2 datasets have no timestamp columns, so the plan from the proposal to drop timestamps did not apply. The remaining 38 features cover byte and packet counts, flow duration, TCP flags, TTL values, packet size bins, throughput, TCP window sizes, and a few protocol fields.
+
+\subsection{Splits and preprocessing}
+
+Each sample was split into 70 percent training, 15 percent validation, and 15 percent test data. The split is stratified by label and uses a fixed seed. This gives about 210,000 training flows and 45,000 flows each for validation and testing per dataset. The test splits never change, so in-dataset and cross-dataset numbers are always measured on the same flows. The validation split is only used for early stopping in the neural networks.
+
+NetFlow features are mostly counts with very long tails. In the UNSW-NB15 sample, the median number of incoming bytes per flow is 1,580 but the largest value is over 30 million. Every feature goes through \mbox{$z = (\log(1 + x) - \mu) / \sigma$}, where $\mu$ and $\sigma$ come only from the training split of the source dataset. Flows from a target dataset are transformed with the source values, the same way a deployed model would see new traffic. Values are then clipped to the range from $-10$ to $10$.
+
+\subsection{Models}
+
+Four model families were compared. They were picked to go from simple to complex and to match topics from the course.
+
+\textbf{Logistic regression} models the attack probability as $p(y = 1 \mid \mathbf{x}) = \sigma(\mathbf{w}^\top \mathbf{x} + b)$ and is trained by minimizing the cross-entropy loss \cite{bishop2006}. It was trained with the L-BFGS solver in scikit-learn \cite{pedregosa2011} for up to 2,000 iterations. It is the simplest model here and works as a baseline, which Arp \etal say every evaluation should include \cite{arp2022}.
+
+\textbf{Random forest} uses 100 trees with at least 2 samples per leaf. Sarhan \etal evaluated the NetFlow v2 datasets with Extra Trees, which is also a tree ensemble \cite{sarhan2022}, so the random forest stands in for the usual approach.
+
+\textbf{Multilayer perceptron}, or MLP, has two hidden layers with 128 and 64 ReLU units, dropout of 0.1, and a single output unit. It was written in PyTorch \cite{paszke2019} and trained with backpropagation and the Adam optimizer, using binary cross-entropy loss, a learning rate of 0.001, and a batch size of 1,024. Training runs for up to 30 epochs and stops early once the validation loss has not improved for 3 epochs. The weights from the best epoch are kept.
+
+\textbf{Self-attention model} follows the FT-Transformer design \cite{gorishniy2021}. Each standardized feature $x_j$ becomes a token $\mathbf{t}_j = x_j \mathbf{w}_j + \mathbf{b}_j \in \mathbb{R}^{16}$, so every feature has its own learned embedding. A learned classification token is added in front, and the 39 tokens go through two transformer encoder layers with two attention heads each \cite{vaswani2017}. Each layer applies
+\begin{equation}
+\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V
+\end{equation}
+so every feature token can weigh every other feature. The output of the classification token goes through a linear layer to make the prediction. The model has 5,729 parameters, compared with 13,313 for the MLP, and is trained the same way as the MLP with up to 20 epochs.
+
+\subsection{Training budget for the attention model}
+
+The attention model is much slower to train on a CPU than the other models, because every flow becomes a sequence of 39 tokens. A first version with 32-dimensional tokens and four heads needed about two and a half minutes per epoch over 210,000 flows. Even the smaller final version needs over a minute per epoch, so the full grid with three seeds and early stopping was not possible in the time available. The attention model was therefore trained on a stratified subsample of 60,000 training flows and 15,000 validation flows from each source dataset. To make sure any difference is caused by the model and not the smaller training set, the MLP was also retrained on exactly the same subsample. These two runs are labeled MLP-60k and Attention-60k. Both are tested on the same full test splits as every other model.
+
+\subsection{Experiments}
+
+There are three experiments.
+
+\textbf{Single-source transfer.} Every model is trained on one dataset and tested on all three, which gives the 3 by 3 grid.
+
+\textbf{Multi-source transfer.} Every model is trained on two datasets combined and tested on the third one, which it has never seen. The result is compared with the same model trained on each of those two datasets alone. For the 60k models the budget stays fixed at 60,000 flows, so they get 30,000 from each source.
+
+\textbf{TTL ablation.} The feature analysis in Section~\ref{sec:features} found that the TTL features act like a lab artifact in UNSW-NB15. Logistic regression, the random forest, and the MLP were retrained without MIN\_TTL and MAX\_TTL to see whether removing them changes cross-dataset results.
+
+\subsection{Evaluation}
+
+The main metric is F1 on the attack class, $F_1 = 2PR/(P + R)$, where precision is $P = TP/(TP + FP)$ and recall is $R = TP/(TP + FN)$. Recall is the detection rate. The false positive rate, $FP/(FP + TN)$, is the share of benign flows flagged as attacks, and it matters because even a small rate turns into a large number of alerts on a real network. ROC AUC is also reported because it does not depend on a threshold. Accuracy is recorded but is not used to judge models, since it can look high when a model misses every attack.
+
+Every model uses a fixed threshold of 0.5. The threshold is never tuned on test data, because tuning it there would inflate the results \cite{arp2022}. Every experiment is repeated with three random seeds, and the tables report the mean. The data split stays the same across seeds, so the spread comes only from training. Logistic regression gives the same answer for every seed.
+
+Feature importance was measured with permutation importance on 10,000 test flows. For each feature, its values are shuffled three times and the average drop in ROC AUC is recorded. A big drop means the model depends on that feature. This was done for the random forest and the MLP trained on each dataset. The proposal mentioned SHAP for the tree model, but permutation importance works the same way for every model, so it was used instead.

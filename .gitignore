@@ -1,0 +1,9 @@
+data/
+samples/
+*.zip
+*.parquet
+__pycache__/
+*.aux
+*.log
+*.out
+*.blg
